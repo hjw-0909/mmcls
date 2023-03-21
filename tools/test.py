@@ -11,7 +11,7 @@ from mmcv import DictAction
 from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
                          wrap_fp16_model)
 
-from mmcls.apis import multi_gpu_test, single_gpu_test
+from mmcls.apis import multi_gpu_test, single_gpu_test, single_gpu_test_get_diff_img
 from mmcls.datasets import build_dataloader, build_dataset
 from mmcls.models import build_classifier
 from mmcls.utils import (auto_select_device, get_root_logger,
@@ -191,7 +191,9 @@ def main():
             data_loader.init(opts['inference'])
         model.CLASSES = CLASSES
         show_kwargs = args.show_options or {}
-        outputs = single_gpu_test(model, data_loader, args.show, args.show_dir,
+        # outputs = single_gpu_test(model, data_loader, args.show, args.show_dir,
+        #                           **show_kwargs)
+        outputs = single_gpu_test_get_diff_img(model, data_loader, args.show, args.show_dir,
                                   **show_kwargs)
     else:
         model = wrap_distributed_model(
@@ -211,12 +213,12 @@ def main():
                 logger=logger)
             results.update(eval_results)
             for k, v in eval_results.items():
-                if isinstance(v, np.ndarray):
+                if isinstance(v, np.ndarray) and k != 'confusion_matrix':
                     v = [round(out, 2) for out in v.tolist()]
                 elif isinstance(v, Number):
                     v = round(v, 2)
-                else:
-                    raise ValueError(f'Unsupport metric type: {type(v)}')
+                # else:
+                #     raise ValueError(f'Unsupport metric type: {type(v)}')
                 print(f'\n{k} : {v}')
         if args.out:
             if 'none' not in args.out_items:

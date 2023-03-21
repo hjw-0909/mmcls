@@ -40,6 +40,43 @@ def calculate_confusion_matrix(pred, target):
         matrix = matrix.reshape(num_classes, num_classes)
     return matrix
 
+def confusion_matrix(pred, target):
+    """Calculate confusion matrix according to the prediction and target.
+
+    Args:
+        pred (torch.Tensor | np.array): The model prediction with shape (N, C).
+        target (torch.Tensor | np.array): The target of each prediction with
+            shape (N, 1) or (N,).
+
+    Returns:
+        torch.Tensor: Confusion matrix
+            The shape is (C, C), where C is the number of classes.
+    """
+
+    if isinstance(pred, np.ndarray):
+        pred = torch.from_numpy(pred)
+    if isinstance(target, np.ndarray):
+        target = torch.from_numpy(target)
+    assert (
+        isinstance(pred, torch.Tensor) and isinstance(target, torch.Tensor)), \
+        (f'pred and target should be torch.Tensor or np.ndarray, '
+         f'but got {type(pred)} and {type(target)}.')
+
+    # Modified from PyTorch-Ignite
+    num_classes = pred.size(1)
+    pred_label = torch.argmax(pred, dim=1).flatten()
+    target_label = target.flatten()
+    assert len(pred_label) == len(target_label)
+
+    with torch.no_grad():
+        indices = num_classes * target_label + pred_label
+        matrix = torch.bincount(indices, minlength=num_classes**2)
+        matrix = matrix.reshape(num_classes, num_classes)
+        matrix = matrix.numpy()
+        normalized_mar = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
+        normalized_mar *= 100
+        np.set_printoptions(suppress=True)
+    return normalized_mar
 
 def precision_recall_f1(pred, target, average_mode='macro', thrs=0.):
     """Calculate precision, recall and f1 score according to the prediction and

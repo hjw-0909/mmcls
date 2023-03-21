@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
+import numpy as np
 
 from ..builder import LOSSES
 from .utils import weight_reduce_loss
@@ -174,6 +176,10 @@ class CrossEntropyLoss(nn.Module):
             self.cls_criterion = soft_cross_entropy
         else:
             self.cls_criterion = cross_entropy
+        if type(loss_weight) is list:
+            self.loss_weight = torch.from_numpy(np.array(loss_weight)).cuda().float()
+        else:
+            self.loss_weight = loss_weight
 
     def forward(self,
                 cls_score,

@@ -9,7 +9,7 @@ import mmcv
 import numpy as np
 from torch.utils.data import Dataset
 
-from mmcls.core.evaluation import precision_recall_f1, support
+from mmcls.core.evaluation import precision_recall_f1, support, calculate_confusion_matrix, confusion_matrix
 from mmcls.models.losses import accuracy
 from .pipelines import Compose
 
@@ -152,7 +152,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         else:
             metrics = metric
         allowed_metrics = [
-            'accuracy', 'precision', 'recall', 'f1_score', 'support'
+            'accuracy', 'precision', 'recall', 'f1_score', 'support', 'confusion_matrix'
         ]
         eval_results = {}
         results = np.vstack(results)
@@ -198,6 +198,11 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
             support_value = support(
                 results, gt_labels, average_mode=average_mode)
             eval_results['support'] = support_value
+        
+        if 'confusion_matrix' in metrics:
+            confusion_matrix_value = confusion_matrix(
+                results, gt_labels)
+            eval_results['confusion_matrix'] = confusion_matrix_value
 
         precision_recall_f1_keys = ['precision', 'recall', 'f1_score']
         if len(set(metrics) & set(precision_recall_f1_keys)) != 0:
